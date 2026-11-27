@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-27 15:53",
+ "updated": "2026-11-27 16:06",
  "items": {
   "kospi": {
    "value": 4915.68,
@@ -26,8 +26,12 @@
    "chg_pct": -1.14
   },
   "usdkrw": {
-   "value": 1337.09,
-   "chg_pct": -0.44
+   "value": 1334.78,
+   "chg_pct": -0.61
+  },
+  "rv20": {
+   "value": 58.9,
+   "chg_pct": null
   }
  },
  "stage": {
@@ -39,6 +43,10 @@
   "days": 0
  },
  "rank_pct": null,
+ "diag": {
+  "vkospi": "kr.investing.com HTTP 403 / www.investing.com HTTP 403 / m.investing.com HTTP 403",
+  "foreign": "naver HTTP 410"
+ },
  "stages": [
   {
    "name": "평소",
