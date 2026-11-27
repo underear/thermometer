@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-27 16:06",
+ "updated": "2026-11-27 16:14",
  "items": {
   "kospi": {
    "value": 4915.68,
@@ -26,8 +26,12 @@
    "chg_pct": -1.14
   },
   "usdkrw": {
-   "value": 1334.78,
-   "chg_pct": -0.61
+   "value": 1335.14,
+   "chg_pct": -0.58
+  },
+  "vkospi": {
+   "value": 59.7,
+   "chg_pct": 2.23
   },
   "rv20": {
    "value": 58.9,
@@ -35,17 +39,17 @@
   }
  },
  "stage": {
-  "name": "평소",
-  "note": "평소 수준이에요"
+  "name": "경계",
+  "note": "공포가 큰 구간이에요"
  },
  "baseline": {
   "ready": false,
-  "days": 0
+  "days": 1
  },
  "rank_pct": null,
  "diag": {
-  "vkospi": "kr.investing.com HTTP 403 / www.investing.com HTTP 403 / m.investing.com HTTP 403",
-  "foreign": "naver HTTP 410"
+  "vkospi": "kr.investing.com 성공",
+  "foreign": "investorDealTrendDay.nhn HTTP 410 / investorDealTrendDay.naver HTTP 410"
  },
  "stages": [
   {
