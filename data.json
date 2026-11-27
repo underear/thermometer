@@ -1,41 +1,41 @@
 {
- "updated": "2026-11-27 16:19",
+ "updated": "2026-11-27 16:24",
  "items": {
-  "vkospi": {
-   "value": 53.18,
-   "chg_pct": -1.39
-  },
   "kospi": {
-   "value": 2480.12,
-   "chg_pct": -1.2
+   "value": 4915.68,
+   "chg_pct": 4.34
   },
   "samsung": {
-   "value": 61200,
-   "chg_pct": -2.1
+   "value": 179100.0,
+   "chg_pct": 4.55
   },
   "hynix": {
-   "value": 1100000,
-   "chg_pct": -7.1
+   "value": 1110000.0,
+   "chg_pct": 7.45
   },
   "vix": {
-   "value": 24.3,
-   "chg_pct": 8.2
+   "value": 26.8,
+   "chg_pct": -5.27
   },
   "sox": {
-   "value": 8408.59,
-   "chg_pct": -10.73
+   "value": 8774.86,
+   "chg_pct": -0.65
   },
   "us10y": {
-   "value": 4.936,
-   "chg_pct": -2.3
+   "value": 4.85,
+   "chg_pct": -1.14
   },
   "usdkrw": {
-   "value": 1462.5,
-   "chg_pct": 0.4
+   "value": 1336.12,
+   "chg_pct": -0.51
   },
-  "foreign": {
-   "value": -12850,
-   "date": "11.26"
+  "vkospi": {
+   "value": 59.7,
+   "chg_pct": 2.23
+  },
+  "rv20": {
+   "value": 58.9,
+   "chg_pct": null
   }
  },
  "stage": {
@@ -47,7 +47,10 @@
   "days": 1
  },
  "rank_pct": null,
- "diag": {},
+ "diag": {
+  "vkospi": "kr.investing.com 성공",
+  "foreign": "investorDealTrendDay.nhn HTTP 410 / investorDealTrendDay.naver HTTP 410"
+ },
  "stages": [
   {
    "name": "평소",
