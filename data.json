@@ -1,41 +1,41 @@
 {
- "updated": "2026-11-27 16:14",
+ "updated": "2026-11-27 16:18",
  "items": {
+  "vkospi": {
+   "value": 53.18,
+   "chg_pct": -1.39
+  },
   "kospi": {
-   "value": 4915.68,
-   "chg_pct": 4.34
+   "value": 2480.12,
+   "chg_pct": -1.2
   },
   "samsung": {
-   "value": 179100.0,
-   "chg_pct": 4.55
+   "value": 61200,
+   "chg_pct": -2.1
   },
   "hynix": {
-   "value": 1110000.0,
-   "chg_pct": 7.45
+   "value": 1100000,
+   "chg_pct": -7.1
   },
   "vix": {
-   "value": 26.8,
-   "chg_pct": -5.27
+   "value": 24.3,
+   "chg_pct": 8.2
   },
   "sox": {
-   "value": 8774.86,
-   "chg_pct": -0.65
+   "value": 8408.59,
+   "chg_pct": -10.73
   },
   "us10y": {
-   "value": 4.85,
-   "chg_pct": -1.14
+   "value": 4.936,
+   "chg_pct": -2.3
   },
   "usdkrw": {
-   "value": 1335.14,
-   "chg_pct": -0.58
+   "value": 1462.5,
+   "chg_pct": 0.4
   },
-  "vkospi": {
-   "value": 59.7,
-   "chg_pct": 2.23
-  },
-  "rv20": {
-   "value": 58.9,
-   "chg_pct": null
+  "foreign": {
+   "value": -12850,
+   "date": "11.26"
   }
  },
  "stage": {
@@ -47,10 +47,7 @@
   "days": 1
  },
  "rank_pct": null,
- "diag": {
-  "vkospi": "kr.investing.com 성공",
-  "foreign": "investorDealTrendDay.nhn HTTP 410 / investorDealTrendDay.naver HTTP 410"
- },
+ "diag": {},
  "stages": [
   {
    "name": "평소",
@@ -73,5 +70,18 @@
    "note": "금융위기급 공포 구간이에요"
   }
  ],
- "log": []
+ "log": [
+  {
+   "t": "11-27 16:18",
+   "m": "SK하이닉스 -7.1%"
+  },
+  {
+   "t": "11-27 16:18",
+   "m": "필라델피아 반도체 -10.7%"
+  },
+  {
+   "t": "11-27 16:18",
+   "m": "외국인 코스피 순매도 -12,850억원"
+  }
+ ]
 }
