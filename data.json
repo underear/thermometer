@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-27 16:29",
+ "updated": "2026-11-27 16:38",
  "items": {
   "kospi": {
    "value": 4915.68,
@@ -26,21 +26,26 @@
    "chg_pct": -1.14
   },
   "usdkrw": {
-   "value": 1336.28,
-   "chg_pct": -0.5
+   "value": 1336.15,
+   "chg_pct": -0.51
   },
   "foreign": {
-   "value": 11190,
+   "value": 11239,
    "date": "11.27"
   },
   "rv20": {
    "value": 58.9,
    "chg_pct": null
+  },
+  "vkospi": {
+   "value": 59.7,
+   "chg_pct": 0.0,
+   "stale": "2026-11-27"
   }
  },
  "stage": {
-  "name": "평소",
-  "note": "평소 수준이에요"
+  "name": "경계",
+  "note": "공포가 큰 구간이에요"
  },
  "baseline": {
   "ready": false,
@@ -48,7 +53,7 @@
  },
  "rank_pct": null,
  "diag": {
-  "vkospi": "m.stock.naver.com HTTP 409 / polling.finance.naver.com 값 못 찾음 / kr.investing.com HTTP 403 / www.investing.com HTTP 403 / m.investing.com HTTP 403",
+  "vkospi": "polling.finance.naver.com 값 못 찾음(키: pollingInterval,datas,time) / m.stock.naver.com HTTP 409 / m.stock.naver.com HTTP 409 / m.stock.naver.com HTTP 409 / kr.investing.com HTTP 403 / www.investing.com HTTP 403 / m.investing.com HTTP 403 → 마지막 기록(2026-11-27) 값 표시",
   "foreign": "m.naver trend 성공(20261127)"
  },
  "stages": [
