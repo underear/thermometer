@@ -17,6 +17,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"N
 .wrap{max-width:520px;margin:0 auto}
 h1{font-size:13px;letter-spacing:.14em;color:var(--gold);margin:0 0 4px}
 .upd{font-size:12px;color:var(--sub);margin-bottom:14px}
+.read{margin:14px 0 0;border-radius:16px;padding:16px 18px;border:1px solid var(--line);background:var(--card);display:none}.read .v{font-size:19px;font-weight:800;margin-bottom:6px}.read .s{font-size:15px;line-height:1.55;margin-bottom:10px}.read ul{margin:0;padding-left:18px;font-size:13px;opacity:.8;line-height:1.7}.read.buy{border-left:6px solid #3e8e63}.read.wait{border-left:6px solid #c0392b}.read.watch{border-left:6px solid #d9a22b}.read.calm{border-left:6px solid #7a8aa0}.read h4{margin:0 0 4px;font-size:12px;letter-spacing:.08em;opacity:.6}
 .hero{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px}
 .vk{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .vk .n{font-size:56px;font-weight:700;line-height:1}
@@ -47,6 +48,7 @@ h2{font-size:15px;margin:22px 2px 10px}
 <h1>MARKET THERMOMETER</h1>
 <div class="upd" id="upd">불러오는 중…</div>
 <div class="hero" id="hero"></div>
+<div class="read" id="read"></div>
 <h2>함께 볼 지표</h2>
 <div class="grid" id="grid"></div>
 <h2>최근 알림</h2>
@@ -63,6 +65,7 @@ const sg=x=>(x>0?'+':'')+x.toFixed(2)+'%';
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{
  document.getElementById('upd').textContent='업데이트 '+d.updated;
  const vk=d.items.vkospi,hero=document.getElementById('hero');
+ if(d.read){const r=document.getElementById('read');r.className='read '+d.read.tone;r.style.display='block';r.innerHTML='<h4>오늘의 해설 (참고용)</h4><div class="v">'+d.read.verdict+'</div><div class="s">'+d.read.summary+'</div><ul>'+d.read.lines.map(x=>'<li>'+x+'</li>').join('')+'</ul>';}
  if(!vk){hero.innerHTML='<div class="empty">VKOSPI 수치를 가져오지 못했어요.<br><small>'+((d.diag&&d.diag.vkospi)||'')+'</small></div>';}
  else{
   const idx=d.stages.findIndex(s=>d.stage.name===s.name);
