@@ -53,6 +53,25 @@ def fetch_vkospi():
         DIAG["vkospi"] = f"requests 없음: {e}"
         return None
     notes = []
+    for url in ["https://m.stock.naver.com/api/index/VKOSPI/basic",
+                "https://polling.finance.naver.com/api/realtime/domestic/index/VKOSPI"]:
+        host = url.split("/")[2] + url.split("/")[-2][:0]
+        try:
+            r = requests.get(url, headers=UA, timeout=20)
+            if r.status_code != 200:
+                notes.append(f"{host} HTTP {r.status_code}")
+                continue
+            j = r.json()
+            if isinstance(j, dict) and "datas" in j and j["datas"]:
+                j = j["datas"][0]
+            v = j.get("closePrice") or j.get("nowVal") or j.get("now")
+            c = j.get("fluctuationsRatio") or j.get("changeRate") or 0
+            if v:
+                DIAG["vkospi"] = f"{host} 성공"
+                return {"value": float(str(v).replace(",", "")), "chg_pct": float(str(c).replace(",", ""))}
+            notes.append(f"{host} 값 못 찾음")
+        except Exception as e:
+            notes.append(f"{host} {type(e).__name__}")
     for url in ["https://kr.investing.com/indices/kospi-volatility",
                 "https://www.investing.com/indices/kospi-volatility",
                 "https://m.investing.com/indices/kospi-volatility"]:
@@ -77,26 +96,35 @@ def fetch_vkospi():
     return None
 
 def fetch_foreign():
-    """네이버 금융 투자자별 매매동향(코스피, 억원). 3번째 칸이 외국인."""
+    """네이버 금융 투자자별 매매동향(코스피, 억원). 3번째 칸이 외국인. 수동값(manual.json)도 허용."""
+    m = load("manual.json", {})
+    if isinstance(m.get("foreign"), (int, float)):
+        DIAG["foreign"] = "수동 입력값 사용"
+        return {"value": int(m["foreign"]), "date": "수동"}
+    notes = []
     try:
-        import requests
-        import lxml.html
+        import requests, lxml.html
         today = dt.datetime.now(KST).strftime("%Y%m%d")
-        r = requests.get("https://finance.naver.com/sise/investorDealTrendDay.naver",
-                         params={"bizdate": today, "sosok": "01"}, headers=UA, timeout=20)
-        if r.status_code != 200:
-            DIAG["foreign"] = f"naver HTTP {r.status_code}"
-            return None
-        doc = lxml.html.fromstring(r.content.decode("euc-kr", "ignore"))
-        for tr in doc.xpath('//table[contains(@class,"type_1")]//tr'):
-            td = [x.text_content().strip() for x in tr.xpath("./td")]
-            if len(td) >= 3 and re.match(r"\d{2}\.\d{2}\.\d{2}", td[0]):
-                val = int(td[2].replace(",", "").replace("+", ""))
-                DIAG["foreign"] = "naver 성공"
-                return {"value": val, "date": td[0]}
-        DIAG["foreign"] = "naver 표를 못 찾음"
+        for path in ["investorDealTrendDay.nhn", "investorDealTrendDay.naver"]:
+            for host in ["finance.naver.com"]:
+                try:
+                    r = requests.get(f"https://{host}/sise/{path}",
+                                     params={"bizdate": today, "sosok": "01"}, headers=UA, timeout=20)
+                    if r.status_code != 200:
+                        notes.append(f"{path} HTTP {r.status_code}")
+                        continue
+                    doc = lxml.html.fromstring(r.content.decode("euc-kr", "ignore"))
+                    for tr in doc.xpath('//table[contains(@class,"type_1")]//tr'):
+                        td = [x.text_content().strip() for x in tr.xpath("./td")]
+                        if len(td) >= 3 and re.match(r"\d{2}\.\d{2}\.\d{2}", td[0]):
+                            DIAG["foreign"] = f"{path} 성공"
+                            return {"value": int(td[2].replace(",", "").replace("+", "")), "date": td[0]}
+                    notes.append(f"{path} 표를 못 찾음")
+                except Exception as e:
+                    notes.append(f"{path} {type(e).__name__}")
     except Exception as e:
-        DIAG["foreign"] = f"{type(e).__name__}: {str(e)[:60]}"
+        notes.append(f"{type(e).__name__}")
+    DIAG["foreign"] = " / ".join(notes)
     return None
 
 def fetch_rv20():
