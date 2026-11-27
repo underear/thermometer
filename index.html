@@ -56,14 +56,14 @@ h2{font-size:15px;margin:22px 2px 10px}
 </div>
 <script>
 const COL=['var(--s0)','var(--s1)','var(--s2)','var(--s3)'];
-const NAMES=[['kospi','코스피'],['hynix','SK하이닉스'],['samsung','삼성전자'],['sox','필라델피아 반도체'],['vix','미국 VIX'],['us10y','미 국채 10년'],['usdkrw','원/달러'],['foreign','외국인 순매수(코스피)']];
+const NAMES=[['kospi','코스피'],['hynix','SK하이닉스'],['samsung','삼성전자'],['sox','필라델피아 반도체'],['vix','미국 VIX'],['rv20','코스피 20일 실현변동성(참고)'],['us10y','미 국채 10년'],['usdkrw','원/달러'],['foreign','외국인 순매수(코스피)']];
 const fmt=n=>Number(n).toLocaleString('ko-KR',{maximumFractionDigits:2});
 const cls=x=>x>0?'up':x<0?'dn':'';
 const sg=x=>(x>0?'+':'')+x.toFixed(2)+'%';
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{
  document.getElementById('upd').textContent='업데이트 '+d.updated;
  const vk=d.items.vkospi,hero=document.getElementById('hero');
- if(!vk){hero.innerHTML='<div class="empty">VKOSPI 수치를 가져오지 못했어요.</div>';}
+ if(!vk){hero.innerHTML='<div class="empty">VKOSPI 수치를 가져오지 못했어요.<br><small>'+((d.diag&&d.diag.vkospi)||'')+'</small></div>';}
  else{
   const idx=d.stages.findIndex(s=>d.stage.name===s.name);
   const pos=Math.min(100,vk.value/100*100);
@@ -76,9 +76,10 @@ fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   <div>${d.baseline.ready?'최근 '+d.baseline.days+'일 중 위치':'기준선 준비'}<b>${d.baseline.ready?'하위 '+d.rank_pct+'%':d.baseline.days+'일 쌓임'}</b></div></div>`;
  }
  const g=document.getElementById('grid');
+ if(d.diag&&d.diag.foreign&&!d.items.foreign){document.querySelector('.foot').insertAdjacentHTML('afterbegin','외국인 수급: '+d.diag.foreign+'<br>');}
  g.innerHTML=NAMES.filter(([k])=>d.items[k]).map(([k,n])=>{const i=d.items[k];
   return k==='foreign'?`<div class="card"><div class="t">${n}</div><div class="v ${cls(i.value)}">${fmt(i.value)}억</div><div class="d" style="color:var(--sub)">${i.date||''}</div></div>`
-  :`<div class="card"><div class="t">${n}</div><div class="v">${fmt(i.value)}</div><div class="d ${cls(i.chg_pct)}">${sg(i.chg_pct)}</div></div>`}).join('');
+  :`<div class="card"><div class="t">${n}</div><div class="v">${fmt(i.value)}${k==='rv20'?'%':''}</div><div class="d ${i.chg_pct==null?'':cls(i.chg_pct)}">${i.chg_pct==null?'':sg(i.chg_pct)}</div></div>`}).join('');
  const l=document.getElementById('log');
  l.innerHTML=d.log.length?d.log.slice().reverse().map(x=>`<div><span>${x.t}</span>${x.m}</div>`).join(''):'<div class="empty">아직 알림이 없어요.</div>';
 }).catch(()=>{document.getElementById('upd').textContent='데이터를 불러오지 못했어요.'});

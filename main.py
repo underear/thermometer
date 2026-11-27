@@ -37,39 +37,79 @@ def fetch_yf():
             pass
     return out
 
+DIAG = {}
+UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+      "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8"}
+
 def fetch_vkospi():
-    """1) manual.json (직접 입력) 2) Investing.com 페이지 시도. 실패 시 None."""
+    """1) manual.json 2) Investing.com 여러 주소 시도. 실패 이유는 DIAG에 기록."""
     m = load("manual.json", {})
     if isinstance(m.get("vkospi"), (int, float)):
+        DIAG["vkospi"] = "수동 입력값 사용"
         return {"value": float(m["vkospi"]), "chg_pct": float(m.get("vkospi_chg_pct", 0))}
     try:
         import requests
-        r = requests.get("https://kr.investing.com/indices/kospi-volatility",
-                         headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        t = r.text
-        v = re.search(r'data-test="instrument-price-last"[^>]*>([\d.,]+)<', t)
-        c = re.search(r'data-test="instrument-price-change-percent"[^>]*>\(?([+-]?[\d.,]+)', t)
-        if v:
-            return {"value": float(v.group(1).replace(",", "")),
-                    "chg_pct": float(c.group(1).replace(",", "")) if c else 0.0}
-    except Exception:
-        pass
+    except Exception as e:
+        DIAG["vkospi"] = f"requests 없음: {e}"
+        return None
+    notes = []
+    for url in ["https://kr.investing.com/indices/kospi-volatility",
+                "https://www.investing.com/indices/kospi-volatility",
+                "https://m.investing.com/indices/kospi-volatility"]:
+        host = url.split("/")[2]
+        try:
+            r = requests.get(url, headers=UA, timeout=20)
+            if r.status_code != 200:
+                notes.append(f"{host} HTTP {r.status_code}")
+                continue
+            t = r.text
+            v = (re.search(r'data-test="instrument-price-last"[^>]*>\s*([\d.,]+)\s*<', t)
+                 or re.search(r'"last"\s*:\s*"?([\d.,]+)"?', t))
+            c = re.search(r'data-test="instrument-price-change-percent"[^>]*>\s*\(?([+-]?[\d.,]+)', t)
+            if v:
+                DIAG["vkospi"] = f"{host} 성공"
+                return {"value": float(v.group(1).replace(",", "")),
+                        "chg_pct": float(c.group(1).replace(",", "")) if c else 0.0}
+            notes.append(f"{host} 값 못 찾음")
+        except Exception as e:
+            notes.append(f"{host} {type(e).__name__}")
+    DIAG["vkospi"] = " / ".join(notes)
     return None
 
 def fetch_foreign():
-    """네이버 금융 투자자별 매매동향(코스피, 억원). 구조가 바뀌면 None."""
+    """네이버 금융 투자자별 매매동향(코스피, 억원). 3번째 칸이 외국인."""
     try:
-        import requests, pandas as pd
+        import requests
+        import lxml.html
+        today = dt.datetime.now(KST).strftime("%Y%m%d")
         r = requests.get("https://finance.naver.com/sise/investorDealTrendDay.naver",
-                         headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        r.encoding = "euc-kr"
-        df = pd.read_html(StringIO(r.text))[0].dropna(how="all")
-        df.columns = [str(c[-1]) if isinstance(c, tuple) else str(c) for c in df.columns]
-        row = df[df.iloc[:, 0].astype(str).str.contains(r"\d")].iloc[0]
-        col = [c for c in df.columns if "외국인" in c][0]
-        return {"value": int(str(row[col]).replace(",", "")), "date": str(row.iloc[0])}
+                         params={"bizdate": today, "sosok": "01"}, headers=UA, timeout=20)
+        if r.status_code != 200:
+            DIAG["foreign"] = f"naver HTTP {r.status_code}"
+            return None
+        doc = lxml.html.fromstring(r.content.decode("euc-kr", "ignore"))
+        for tr in doc.xpath('//table[contains(@class,"type_1")]//tr'):
+            td = [x.text_content().strip() for x in tr.xpath("./td")]
+            if len(td) >= 3 and re.match(r"\d{2}\.\d{2}\.\d{2}", td[0]):
+                val = int(td[2].replace(",", "").replace("+", ""))
+                DIAG["foreign"] = "naver 성공"
+                return {"value": val, "date": td[0]}
+        DIAG["foreign"] = "naver 표를 못 찾음"
+    except Exception as e:
+        DIAG["foreign"] = f"{type(e).__name__}: {str(e)[:60]}"
+    return None
+
+def fetch_rv20():
+    """참고용: 코스피 20일 실현변동성(연율, %). VKOSPI와 다른 값이에요."""
+    try:
+        import yfinance as yf
+        h = yf.Ticker("^KS11").history(period="3mo")["Close"].dropna()
+        r = h.pct_change().dropna().tail(20)
+        if len(r) >= 15:
+            return {"value": round(float(r.std() * (252 ** 0.5) * 100), 1), "chg_pct": None}
     except Exception:
-        return None
+        pass
+    return None
 
 # ---------- 판정 ----------
 def stage_of(v, cfg):
@@ -125,16 +165,18 @@ def push(title, msg):
 
 def brief_text(cur, stg, rk):
     vk = cur.get("vkospi")
-    if not vk:
-        return "VKOSPI 수치를 가져오지 못했어요."
-    day = vk["value"] / 16
-    s = f"VKOSPI {vk['value']:.1f} ({vk['chg_pct']:+.1f}%) · {stg['name']} 단계\n하루 예상 폭 약 ±{day:.1f}%"
-    if rk is not None:
-        s += f" · 최근 기록 중 하위 {rk}% 수준"
+    if vk:
+        s = f"VKOSPI {vk['value']:.1f} ({vk['chg_pct']:+.1f}%) · {stg['name']} 단계\n하루 예상 폭 약 ±{vk['value'] / 16:.1f}%"
+        if rk is not None:
+            s += f" · 최근 기록 중 하위 {rk}% 수준"
+    else:
+        s = "VKOSPI 수치를 가져오지 못했어요."
     for k, n in [("kospi", "코스피"), ("hynix", "SK하이닉스"), ("samsung", "삼성전자"),
                  ("sox", "필라델피아 반도체"), ("vix", "VIX")]:
         if cur.get(k):
             s += f"\n{n} {cur[k]['value']:,} ({cur[k]['chg_pct']:+.1f}%)"
+    if cur.get("foreign"):
+        s += f"\n외국인 코스피 {cur['foreign']['value']:,}억원"
     return s
 
 def demo():
@@ -150,9 +192,10 @@ def run(mode):
     state = load("state.json", {})
     cur = demo() if mode == "demo" else {**fetch_yf()}
     if mode != "demo":
-        vk, fr = fetch_vkospi(), fetch_foreign()
+        vk, fr, rv = fetch_vkospi(), fetch_foreign(), fetch_rv20()
         if vk: cur["vkospi"] = vk
         if fr: cur["foreign"] = fr
+        if rv: cur["rv20"] = rv
     now = dt.datetime.now(KST)
     vk = cur.get("vkospi")
     stg = stage_of(vk["value"], cfg) if vk else cfg["stages"][0]
@@ -168,7 +211,7 @@ def run(mode):
     alerts = make_alerts(cur, state, cfg) if mode != "brief" else []
     data = {"updated": now.strftime("%Y-%m-%d %H:%M"), "items": cur,
             "stage": {"name": stg["name"], "note": stg["note"]},
-            "baseline": base, "rank_pct": rk, "stages": cfg["stages"],
+            "baseline": base, "rank_pct": rk, "diag": DIAG, "stages": cfg["stages"],
             "log": (load("data.json", {}).get("log", []) +
                     [{"t": now.strftime("%m-%d %H:%M"), "m": x} for x in alerts])[-30:]}
     save("data.json", data); save("history.json", hist)
