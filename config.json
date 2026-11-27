@@ -1,0 +1,15 @@
+{
+  "stages": [
+    {"name": "평소", "max": 30, "note": "평소 수준이에요"},
+    {"name": "관찰", "max": 50, "note": "변동성이 커지는 구간이에요"},
+    {"name": "경계", "max": 80, "note": "공포가 큰 구간이에요"},
+    {"name": "극단", "max": 999, "note": "금융위기급 공포 구간이에요"}
+  ],
+  "alert": {
+    "vkospi_cross": [30, 50, 80],
+    "vkospi_daily_pct": 10,
+    "move_pct": {"kospi": 3, "samsung": 5, "hynix": 5, "vix": 15, "sox": 4, "usdkrw": 1.5},
+    "foreign_net_eok": -10000
+  },
+  "baseline_min_days": 60
+}

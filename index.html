@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1e3354">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.png">
+<title>시장 온도계</title>
+<style>
+:root{--bg:#f6f3ec;--card:#fff;--ink:#1e3354;--sub:#6b7280;--line:#e6dfd0;--gold:#a67c52;
+--s0:#3f8f6b;--s1:#d9a431;--s2:#d9772b;--s3:#c0392b;--up:#c0392b;--dn:#2f6fb5}
+@media (prefers-color-scheme:dark){:root{--bg:#10151f;--card:#18202e;--ink:#e8ecf3;--sub:#9aa5b8;--line:#2a3447;--gold:#d3a574;--up:#ff6b5e;--dn:#6aa8f0}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Noto Sans KR","Apple SD Gothic Neo",sans-serif;padding:calc(env(safe-area-inset-top) + 16px) 16px 40px}
+.wrap{max-width:520px;margin:0 auto}
+h1{font-size:13px;letter-spacing:.14em;color:var(--gold);margin:0 0 4px}
+.upd{font-size:12px;color:var(--sub);margin-bottom:14px}
+.hero{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px}
+.vk{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.vk .n{font-size:56px;font-weight:700;line-height:1}
+.vk .c{font-size:16px;font-weight:600}
+.badge{display:inline-block;padding:4px 12px;border-radius:999px;color:#fff;font-weight:700;font-size:14px;margin-top:12px}
+.note{color:var(--sub);font-size:14px;margin:8px 0 0}
+.gauge{position:relative;height:12px;border-radius:6px;margin:22px 0 6px;background:linear-gradient(90deg,var(--s0) 0 30%,var(--s1) 30% 50%,var(--s2) 50% 80%,var(--s3) 80% 100%)}
+.pin{position:absolute;top:-6px;width:4px;height:24px;background:var(--ink);border-radius:2px;transform:translateX(-2px)}
+.ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--sub)}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.meta div{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--sub)}
+.meta b{display:block;font-size:17px;color:var(--ink);margin-top:2px}
+h2{font-size:15px;margin:22px 2px 10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.card .t{font-size:12px;color:var(--sub)}
+.card .v{font-size:19px;font-weight:700;margin-top:4px}
+.card .d{font-size:13px;font-weight:600;margin-top:2px}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.log{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 14px}
+.log div{padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.log div:last-child{border:0}.log span{color:var(--sub);margin-right:8px}
+.empty{color:var(--sub);font-size:13px;padding:10px 0}
+.foot{margin-top:22px;font-size:11px;color:var(--sub);line-height:1.6}
+</style>
+</head>
+<body><div class="wrap">
+<h1>MARKET THERMOMETER</h1>
+<div class="upd" id="upd">불러오는 중…</div>
+<div class="hero" id="hero"></div>
+<h2>함께 볼 지표</h2>
+<div class="grid" id="grid"></div>
+<h2>최근 알림</h2>
+<div class="log" id="log"></div>
+<div class="foot">VKOSPI 단계: 평소 30 미만 · 관찰 30~50 · 경계 50~80 · 극단 80 이상 (config.json에서 수정).<br>
+투자 권유가 아닌 참고용 지표예요. 데이터는 지연되거나 비어 있을 수 있어요.</div>
+</div>
+<script>
+const COL=['var(--s0)','var(--s1)','var(--s2)','var(--s3)'];
+const NAMES=[['kospi','코스피'],['hynix','SK하이닉스'],['samsung','삼성전자'],['sox','필라델피아 반도체'],['vix','미국 VIX'],['us10y','미 국채 10년'],['usdkrw','원/달러'],['foreign','외국인 순매수(코스피)']];
+const fmt=n=>Number(n).toLocaleString('ko-KR',{maximumFractionDigits:2});
+const cls=x=>x>0?'up':x<0?'dn':'';
+const sg=x=>(x>0?'+':'')+x.toFixed(2)+'%';
+fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{
+ document.getElementById('upd').textContent='업데이트 '+d.updated;
+ const vk=d.items.vkospi,hero=document.getElementById('hero');
+ if(!vk){hero.innerHTML='<div class="empty">VKOSPI 수치를 가져오지 못했어요.</div>';}
+ else{
+  const idx=d.stages.findIndex(s=>d.stage.name===s.name);
+  const pos=Math.min(100,vk.value/100*100);
+  hero.innerHTML=`<div class="vk"><div class="n">${vk.value.toFixed(1)}</div><div class="c ${cls(vk.chg_pct)}">${sg(vk.chg_pct)}</div></div>
+  <span class="badge" style="background:${COL[idx]}">${d.stage.name}</span>
+  <p class="note">${d.stage.note}</p>
+  <div class="gauge"><div class="pin" style="left:${pos}%"></div></div>
+  <div class="ticks"><span>0</span><span>30</span><span>50</span><span>80</span><span>100</span></div>
+  <div class="meta"><div>하루 예상 폭<b>±${(vk.value/16).toFixed(1)}%</b></div>
+  <div>${d.baseline.ready?'최근 '+d.baseline.days+'일 중 위치':'기준선 준비'}<b>${d.baseline.ready?'하위 '+d.rank_pct+'%':d.baseline.days+'일 쌓임'}</b></div></div>`;
+ }
+ const g=document.getElementById('grid');
+ g.innerHTML=NAMES.filter(([k])=>d.items[k]).map(([k,n])=>{const i=d.items[k];
+  return k==='foreign'?`<div class="card"><div class="t">${n}</div><div class="v ${cls(i.value)}">${fmt(i.value)}억</div><div class="d" style="color:var(--sub)">${i.date||''}</div></div>`
+  :`<div class="card"><div class="t">${n}</div><div class="v">${fmt(i.value)}</div><div class="d ${cls(i.chg_pct)}">${sg(i.chg_pct)}</div></div>`}).join('');
+ const l=document.getElementById('log');
+ l.innerHTML=d.log.length?d.log.slice().reverse().map(x=>`<div><span>${x.t}</span>${x.m}</div>`).join(''):'<div class="empty">아직 알림이 없어요.</div>';
+}).catch(()=>{document.getElementById('upd').textContent='데이터를 불러오지 못했어요.'});
+</script>
+</body></html>
