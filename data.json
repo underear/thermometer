@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-27 16:24",
+ "updated": "2026-11-27 16:29",
  "items": {
   "kospi": {
    "value": 4915.68,
@@ -26,12 +26,12 @@
    "chg_pct": -1.14
   },
   "usdkrw": {
-   "value": 1336.12,
-   "chg_pct": -0.51
+   "value": 1336.28,
+   "chg_pct": -0.5
   },
-  "vkospi": {
-   "value": 59.7,
-   "chg_pct": 2.23
+  "foreign": {
+   "value": 11190,
+   "date": "11.27"
   },
   "rv20": {
    "value": 58.9,
@@ -39,8 +39,8 @@
   }
  },
  "stage": {
-  "name": "경계",
-  "note": "공포가 큰 구간이에요"
+  "name": "평소",
+  "note": "평소 수준이에요"
  },
  "baseline": {
   "ready": false,
@@ -48,8 +48,8 @@
  },
  "rank_pct": null,
  "diag": {
-  "vkospi": "kr.investing.com 성공",
-  "foreign": "investorDealTrendDay.nhn HTTP 410 / investorDealTrendDay.naver HTTP 410"
+  "vkospi": "m.stock.naver.com HTTP 409 / polling.finance.naver.com 값 못 찾음 / kr.investing.com HTTP 403 / www.investing.com HTTP 403 / m.investing.com HTTP 403",
+  "foreign": "m.naver trend 성공(20261127)"
  },
  "stages": [
   {
