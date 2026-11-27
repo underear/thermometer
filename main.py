@@ -53,25 +53,37 @@ def fetch_vkospi():
         DIAG["vkospi"] = f"requests 없음: {e}"
         return None
     notes = []
-    for url in ["https://m.stock.naver.com/api/index/VKOSPI/basic",
-                "https://polling.finance.naver.com/api/realtime/domestic/index/VKOSPI"]:
-        host = url.split("/")[2] + url.split("/")[-2][:0]
-        try:
-            r = requests.get(url, headers=UA, timeout=20)
-            if r.status_code != 200:
-                notes.append(f"{host} HTTP {r.status_code}")
-                continue
-            j = r.json()
-            if isinstance(j, dict) and "datas" in j and j["datas"]:
-                j = j["datas"][0]
-            v = j.get("closePrice") or j.get("nowVal") or j.get("now")
-            c = j.get("fluctuationsRatio") or j.get("changeRate") or 0
-            if v:
-                DIAG["vkospi"] = f"{host} 성공"
-                return {"value": float(str(v).replace(",", "")), "chg_pct": float(str(c).replace(",", ""))}
-            notes.append(f"{host} 값 못 찾음")
-        except Exception as e:
-            notes.append(f"{host} {type(e).__name__}")
+    import time
+    def _f(x):
+        return float(str(x).replace(",", "").replace("+", "").strip())
+    for url in ["https://polling.finance.naver.com/api/realtime/domestic/index/VKOSPI",
+                "https://m.stock.naver.com/api/index/VKOSPI/basic"]:
+        host = url.split("/")[2]
+        for attempt in range(3):
+            try:
+                r = requests.get(url, headers=UA, timeout=20)
+                if r.status_code != 200:
+                    notes.append(f"{host} HTTP {r.status_code}")
+                    time.sleep(3 * (attempt + 1))
+                    continue
+                j = r.json()
+                if isinstance(j, dict) and j.get("datas"):
+                    j = j["datas"][0]
+                v = c = None
+                for k in ("closePrice", "nowVal", "now", "currentPrice", "price"):
+                    if j.get(k) not in (None, ""):
+                        v = j[k]; break
+                for k in ("fluctuationsRatio", "changeRate", "fluctuationRate"):
+                    if j.get(k) not in (None, ""):
+                        c = j[k]; break
+                if v is not None:
+                    DIAG["vkospi"] = f"{host} 성공"
+                    return {"value": _f(v), "chg_pct": _f(c) if c is not None else 0.0}
+                notes.append(f"{host} 값 못 찾음(키: {','.join(list(j)[:8]) if isinstance(j, dict) else type(j).__name__})")
+                break
+            except Exception as e:
+                notes.append(f"{host} {type(e).__name__}")
+                break
     for url in ["https://kr.investing.com/indices/kospi-volatility",
                 "https://www.investing.com/indices/kospi-volatility",
                 "https://m.investing.com/indices/kospi-volatility"]:
@@ -221,7 +233,7 @@ def push(title, msg):
 def brief_text(cur, stg, rk):
     vk = cur.get("vkospi")
     if vk:
-        s = f"VKOSPI {vk['value']:.1f} ({vk['chg_pct']:+.1f}%) · {stg['name']} 단계\n하루 예상 폭 약 ±{vk['value'] / 16:.1f}%"
+        s = f"VKOSPI {vk['value']:.1f} ({vk['chg_pct']:+.1f}%) · {stg['name']} 단계" + (f" [※{vk['stale']} 기록값]" if vk.get("stale") else "") + f"\n하루 예상 폭 약 ±{vk['value'] / 16:.1f}%"
         if rk is not None:
             s += f" · 최근 기록 중 하위 {rk}% 수준"
     else:
@@ -257,11 +269,19 @@ def run(mode):
         if rv: cur["rv20"] = rv
     now = dt.datetime.now(KST)
     vk = cur.get("vkospi")
+    if not vk and mode != "demo":
+        last = [h for h in hist if h.get("vkospi")]
+        if last:
+            vk = {"value": last[-1]["vkospi"], "chg_pct": 0.0, "stale": last[-1]["date"]}
+            cur["vkospi"] = vk
+            DIAG["vkospi"] = (DIAG.get("vkospi", "") + f" → 마지막 기록({last[-1]['date']}) 값 표시").strip()
     stg = stage_of(vk["value"], cfg) if vk else cfg["stages"][0]
     today = now.strftime("%Y-%m-%d")
-    if vk and not any(h["date"] == today for h in hist):
+    if vk and vk.get("stale"):
+        pass
+    elif vk and not any(h["date"] == today for h in hist):
         hist.append({"date": today, "vkospi": vk["value"]})
-    elif vk:
+    elif vk and not vk.get("stale"):
         for h in hist:
             if h["date"] == today: h["vkospi"] = vk["value"]
     hist = hist[-750:]

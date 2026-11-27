@@ -76,6 +76,7 @@ fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   <div>${d.baseline.ready?'최근 '+d.baseline.days+'일 중 위치':'기준선 준비'}<b>${d.baseline.ready?'하위 '+d.rank_pct+'%':d.baseline.days+'일 쌓임'}</b></div></div>`;
  }
  const g=document.getElementById('grid');
+ if(d.items.vkospi&&d.items.vkospi.stale){document.querySelector('.foot').insertAdjacentHTML('afterbegin','VKOSPI: 실시간 수집 실패, '+d.items.vkospi.stale+' 기록값 표시 ('+((d.diag&&d.diag.vkospi)||'')+')<br>');}
  if(d.diag&&d.diag.foreign&&!d.items.foreign){document.querySelector('.foot').insertAdjacentHTML('afterbegin','외국인 수급: '+d.diag.foreign+'<br>');}
  g.innerHTML=NAMES.filter(([k])=>d.items[k]).map(([k,n])=>{const i=d.items[k];
   return k==='foreign'?`<div class="card"><div class="t">${n}</div><div class="v ${cls(i.value)}">${fmt(i.value)}억</div><div class="d" style="color:var(--sub)">${i.date||''}</div></div>`
