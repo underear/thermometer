@@ -104,6 +104,29 @@ def fetch_foreign():
     notes = []
     try:
         import requests, lxml.html
+        def _n(x):
+            return int(str(x).replace(",", "").replace("+", "").strip())
+        # 1) 네이버 모바일 JSON (오늘부터 최대 6일 전까지 가장 최근 거래일을 찾음)
+        for back in range(0, 7):
+            d = dt.datetime.now(KST) - dt.timedelta(days=back)
+            if d.weekday() >= 5:
+                continue
+            ymd = d.strftime("%Y%m%d")
+            try:
+                r = requests.get("https://m.stock.naver.com/api/index/KOSPI/trend",
+                                 params={"bizdate": ymd}, headers=UA, timeout=20)
+                if r.status_code != 200:
+                    notes.append(f"m.naver trend HTTP {r.status_code}")
+                    break
+                j = r.json()
+                if j.get("foreignValue") not in (None, "") and str(j.get("bizdate")) == ymd:
+                    DIAG["foreign"] = f"m.naver trend 성공({ymd})"
+                    return {"value": _n(j["foreignValue"]), "date": ymd[4:6] + "." + ymd[6:]}
+                if back == 0:
+                    notes.append("오늘 자료 아직 없음→이전 거래일 확인")
+            except Exception as e:
+                notes.append(f"m.naver trend {type(e).__name__}")
+                break
         today = dt.datetime.now(KST).strftime("%Y%m%d")
         for path in ["investorDealTrendDay.nhn", "investorDealTrendDay.naver"]:
             for host in ["finance.naver.com"]:
@@ -189,7 +212,11 @@ def push(title, msg):
         print("[알림 미전송: NTFY_TOPIC 없음]", title, msg)
         return
     import requests
-    requests.post("https://ntfy.sh/", json={"topic": topic, "title": title, "message": msg}, timeout=15)
+    try:
+        r = requests.post("https://ntfy.sh/", json={"topic": topic, "title": title, "message": msg}, timeout=15)
+        print(f"[ntfy 전송] HTTP {r.status_code} / 주제 글자수 {len(topic)}")
+    except Exception as e:
+        print("[ntfy 전송 실패]", type(e).__name__, e)
 
 def brief_text(cur, stg, rk):
     vk = cur.get("vkospi")
@@ -215,6 +242,10 @@ def demo():
             "usdkrw": {"value": 1462.5, "chg_pct": 0.4}, "foreign": {"value": -12850, "date": "11.26"}}
 
 def run(mode):
+    if mode == "test":
+        push("✅ 시험 알림", "시장 온도계 알림이 정상 연결됐어요.")
+        print("시험 알림 전송 시도 완료 (데이터는 건드리지 않아요)")
+        return
     cfg = load("config.json", {})
     hist = load("history.json", [])
     state = load("state.json", {})
